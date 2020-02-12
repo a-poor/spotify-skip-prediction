@@ -4,19 +4,19 @@ let DATA;
 
 d3.json("indie_playlist.json").then(data => {
     console.log("Data loaded...");
-    console.log(data);
-
-    DATA = JSON.stringify(data);
+    // console.log(data);
 
     // Create the table of data
-    d3.select('#data-table-body')
-      .selectAll("tr")
-      .data(data)
-      .enter()
-      .append("tr");
+    // d3.select('#data-table-body')
+    //   .selectAll("tr")
+    //   .data(data)
+    //   .enter()
+    //   .append("tr");
+
+    DATA = data;
 
     // Plot the attributes
-    let atts_to_plot = [
+    let attrs_to_plot = [
         "duration_ms",
         "popularity",
         "acousticness",
@@ -31,95 +31,110 @@ d3.json("indie_playlist.json").then(data => {
         "tempo",
         "time_signature",
         "valence"
+    ];  // 14 categories
+
+    const svg_width = 1200;
+    const svg_height = 500;
+
+    d3.select("#data-plots")
+        .selectAll("svg")
+        .data(attrs_to_plot)
+        .enter()
+        .append("svg")
+        .attr("width", svg_width)
+        .attr("height", svg_height)
+        .attr("id", d => "plot_" + d)
+        .append("rect")
+        .attr("x",0)
+        .attr("y",0)
+        .attr("width","100%")
+        .attr("height","100%")
+        .attr("fill","#ebebeb");
+
+    const x_buffer = 25;
+    const y_buffer = 25;
+
+    const x_range = [
+        0+x_buffer,
+        svg_width-x_buffer
+    ];
+    const y_range = [
+        svg_height-y_buffer,
+        0+y_buffer
     ];
 
-    function make_attr_plot(container, attr) {
+    for (let i = 0; i < attrs_to_plot.length; i++) {
+        // Grab the attribute being plotted
+        let attr = attrs_to_plot[i];
+
+        // Grab the svg element
+        let svg = d3.select("#plot_"+attr);
+
+        // Create the scalers
+        const scX = d3.scaleLinear()
+                    .domain(d3.extent(data, (d, i) => i))
+                    .range(x_range)
+                    .nice();
+        const scY = d3.scaleLinear()
+                    .domain(d3.extent(data, d => d[attr]))
+                    .range(y_range)
+                    .nice();
+
+        // Create the line generator
+        let lineGenerator = d3.line()
+            .curve(d3.curveCatmullRom)
+            .x((d, i) => scX(i))
+            .y((d, i) => scY(d[attr]));
+
+        let path = lineGenerator(data);
+
+        // Add the path
+        svg.append("g")
+            .attr("class","curve")
+            .append("path")
+            .attr("d", path)
+            .attr('fill-opacity',0)
+            .attr("stroke",'black')
+            .attr('stroke-width',2)
+
+        // Add the points
+        svg.append("g")
+            .attr("id", "points")
+            .selectAll("circle")
+            .data(data)
+            .enter()
+            .append("circle")
+            .attr("r",3)
+            .attr('fill','black')
+            .attr("cx", (d, i) => scX(i))
+            .attr("cy", d => scY(d[attr]));
+
+
+
+        // Add the title
+        // svg.append("rect")
+        //     .attr("x",x_buffer/2)
+        //     .attr("y",y_buffer/2)
+        //     .attr("width",x_buffer*10)
+        //     .attr("height",y_buffer*5)
+        //     .attr("fill","#525252");
+
+        function format_title(t) {
+            return t.split("_")
+                .map(w => w[0].toUpperCase()+w.substring(1))
+                .reduce((a,b) => a+" "+b);
+        }
+
+        svg.append("text")
+            .text(format_title(attr))
+            .attr("fill","#525252") // .attr("fill","#6bf23a")
+            .style("font", "bold 30px sans-serif")
+            .attr("x",20)
+            .attr("y",40)
+            .attr("width");
+
 
     }
-
-    console.log("Plotting playlist energy...");
-    let playlist_length = data.length;
-    let max_energy = data[0].energy;
-    let min_energy = data[0].energy;
-    for (let i = 1; i < data.length; i++) {
-        let e = data[i].energy;
-        if (e > max_energy) max_energy = e;
-        if (e < min_energy) min_energy = e;
-    }
-
-    function map(v,in_min,in_max,out_min,out_max) {
-        let p = (v - in_min) / (in_max - in_min);
-        return p * (out_max - out_min) + out_min;
-    }
-
-    function mapX(v) {
-        return map(v,0,playlist_length,25,1200-25);
-    }
-
-    function mapY(v) {
-        return map(v,min_energy,max_energy,375,25);
-    }
-
-    let energyData = [];
-    for (let i = 0; i < data.length; i++) {
-        energyData.push([mapX(i), mapY(data[i].energy)]);
-    }
-    let lineGenerator = d3.line()
-        .curve(d3.curveCardinal);
-    let energyPath = lineGenerator(energyData);
-
-    svg.select("path")
-        .attr("d", energyPath)
-        .attr('fill-opacity',0)
-        .attr("stroke",'black')
-        .attr('stroke-width',2)
-
-    svg.select("#points")
-        .selectAll("circle")
-        .data(JSON.parse(DATA))
-        .enter()
-        .append("circle")
-        .attr("r",4)
-        .attr('fill','black')
-        .attr("cx", (d, i) => {
-            return mapX(i);
-        }).attr("cy", (d) => {
-            return mapY(d.energy);
-        });
-
-    const table_columns = [
-        "artist",
-        "name",
-        "duration_ms",
-        "popularity",
-        "acousticness",
-        "danceability",
-        "energy",
-        "instrumentalness",
-        "key",
-        "liveness",
-        "loudness",
-        "mode",
-        "speechiness",
-        "tempo",
-        "time_signature",
-        "valence"
-    ];
-
-    const table_data = JSON.parse(DATA);
-
-    d3.select("thead")
-        .selectAll("th")
-        .data(table_columns)
-        .enter()
-        .append("th")
-        .text((d,i) => {
-            return d.replace("_"," ").split(" ").map(w => w[0].toUpperCase() + w.substring(1)).reduce((a,b) => a + " " + b);
-        })
-
-
-    d3.select("tbody")
-        .selectAll("tr")
 
 
 });
