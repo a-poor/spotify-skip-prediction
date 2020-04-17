@@ -12,9 +12,22 @@ You can find the blog post I wrote about the project [here](https://towardsdatas
 
 ***
 
+## Navigating the Repo
+
+Performed EDA in the notebook: [spotify_data_eda.ipynb](spotify_data_eda.ipynb)
+
+Modeled the data in the notebook: [lgbm_model_single_history.ipynb](lgbm_model_single_history.ipynb)
+
+I included a copy of my presentation deck as a PDF, [here](spotifySkipPrediction_presentation.pdf)
+
+You can find plot's I've generated in the [images/](images/) directory but for explanations of the plots, see either my presentation deck or blog post, as most plots were generated for one or the other.
+
+I've also included one of the final versions of my `LightGBM` model (which got an accuracy of `0.73`) as a pickle file, [here](lgbm_model_0.73TestAcc.pkl).
 
 ***
 
-The link to the original challenge is [here](https://www.aicrowd.com/challenges/spotify-sequential-skip-prediction-challenge).
+## References
+
+The link to the original challenge, where you can download the data, is [here](https://www.aicrowd.com/challenges/spotify-sequential-skip-prediction-challenge).
 
 \[1] B. Brost, R. Mehrotra, and T. Jehan, The Music Streaming Sessions Dataset (2019), Proceedings of the 2019 Web Conference
